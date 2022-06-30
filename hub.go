@@ -28,6 +28,8 @@ func (hub Hub) run() {
 			hub.clients[res] = true
 		case res := <-hub.unregister:
 			fmt.Println("Response unregister ", res)
+			close(res.toHub)
+			close(res.toSocket)
 			delete(hub.clients, res)
 		case res := <-hub.broadcast:
 			fmt.Println("Response broadcast ", res)
