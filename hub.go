@@ -14,9 +14,9 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[Client]bool),
-		register:   make(chan Client),
-		unregister: make(chan Client),
-		broadcast:  make(chan Message),
+		register:   make(chan Client, 64),
+		unregister: make(chan Client, 64),
+		broadcast:  make(chan Message, 64),
 	}
 }
 
@@ -32,7 +32,12 @@ func (hub Hub) run() {
 		case res := <-hub.broadcast:
 			fmt.Println("Response broadcast ", res)
 			for client := range hub.clients {
-				client.toSocket <- fmt.Sprintf("%s: %s", res.client.name, res.message)
+				select {
+				case client.toSocket <- fmt.Sprintf("%s: %s", res.client.name, res.message):
+				default:
+					fmt.Println("Channel full. Disconnecting")
+					hub.unregister <- client
+				}
 			}
 		}
 	}

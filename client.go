@@ -68,7 +68,7 @@ func (hub Hub) serveWs(w http.ResponseWriter, r *http.Request) {
 
 	client.conn = conn
 	client.name = string(p)
-	client.toSocket = make(chan string)
+	client.toSocket = make(chan string, 64)
 	client.toHub = hub.broadcast
 	hub.register <- client
 
