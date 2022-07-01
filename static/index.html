@@ -2,7 +2,7 @@
 <html>
     <head>
         <script>
-            var socket = new WebSocket("ws://127.0.0.1:81/");
+            var socket = new WebSocket("ws://" + location.host + "/ws");
             socket.onopen = function() {
                 socket.send("username");
             };
@@ -26,5 +26,6 @@
         </script>
     </head>
     <body>
+
     </body>
 </html>

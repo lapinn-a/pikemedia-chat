@@ -1,24 +1,15 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-	"os"
+	"log"
 )
 
 func main() {
 	hub := NewHub()
 	go hub.run()
 
-	http.HandleFunc("/", hub.serveWs)
-
-	err := http.ListenAndServe(":81", nil)
-
-	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
-	} else if err != nil {
-		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
+	err := hub.Router().Run(":81")
+	if err != nil {
+		log.Fatalf("FATAL: Error starting server: %s\n", err)
 	}
 }
