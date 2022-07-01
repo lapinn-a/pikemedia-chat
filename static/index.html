@@ -6,7 +6,7 @@
             socket.onopen = function() {
                 socket.send("username");
             };
-            
+
             socket.onclose = function(event) {
                 if (event.wasClean) {
                     console.log('Соединение закрыто чисто');
@@ -15,7 +15,7 @@
                 }
                 console.log('Код: ' + event.code + ' причина: ' + event.reason);
             };
-            
+
             socket.onmessage = function(event) {
                 console.log("Получены данные " + event.data);
             };
@@ -26,6 +26,21 @@
         </script>
     </head>
     <body>
-
+        <form method="post" action="chat">
+            <div style="width:350px">
+            <b>Выберите комнату:</b>
+            <br>
+            <select name="user" id="userID" size="10" style="width:250px">
+                <option>John</option>
+                <option>Paul</option>
+                <option>Ringo</option>
+                <option>George</option>
+            </select>
+            <br>
+            <div style="display: inline-block"><b>Ваше имя:</b></div>
+            <input type="text" style="display: inline-block">
+            <input type="submit" value="Войти" style="display: inline-block">
+            </div>
+        </form>
     </body>
 </html>
