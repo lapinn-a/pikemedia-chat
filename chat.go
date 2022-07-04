@@ -47,7 +47,9 @@ func (chat *Chat) getOnline(c *gin.Context) {
 		online := make(map[string]int)
 		acc := 0
 		for key, value := range chat.rooms {
-			online[key] = value.CountOnline()
+			roomOnline := value.CountOnline()
+			online[key] = roomOnline
+			acc += roomOnline
 		}
 		c.JSON(http.StatusOK, gin.H{"rooms": online, "overall": acc})
 	}
