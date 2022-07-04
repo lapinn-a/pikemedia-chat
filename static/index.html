@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
     <head>
         <script>
             var socket;
@@ -56,12 +56,24 @@
                 return false;
             }
         </script>
+        <title>PikeMedia Chat</title>
     </head>
     <body>
         <div id="join">
+            <form method="post" action="/">
+                <div style="width:500px">
+                    <label for="newRoom">
+                        <b>Создать комнату:</b>
+                    </label>
+                    <input id="newRoom" name="room" type="text" style="display: inline-block">
+                    <input type="submit" value="Создать" style="display: inline-block">
+                </div>
+            </form>
             <form onSubmit="return register();">
                 <div style="width:500px">
-                    <b>Выберите комнату:</b>
+                    <label for="room">
+                        <b>Выберите комнату:</b>
+                    </label>
                     <br>
                     <select id="room" size="10" style="width:250px">
                         {{ range $k, $v := . }}
@@ -74,9 +86,9 @@
                         {{ end }}
                     </select>
                     <br>
-                    <div style="display: inline-block">
+                    <label for="name">
                         <b>Ваше имя:</b>
-                    </div>
+                    </label>
                     <input id="name" type="text" style="display: inline-block">
                     <input type="submit" value="Войти" style="display: inline-block">
                 </div>
@@ -90,9 +102,9 @@
                     <div id="messages" style="width:350px; height:350px; overflow-y: scroll">
                     </div>
                     <br>
-                    <div style="display: inline-block">
+                    <label for="message">
                         <b>Ваше сообщение:</b>
-                    </div>
+                    </label>
                     <input id="message" type="text" style="display: inline-block;">
                     <input type="submit" value="Отправить" style="display: inline-block">
                 </div>

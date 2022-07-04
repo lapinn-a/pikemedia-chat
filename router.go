@@ -14,6 +14,7 @@ func (chat *Chat) Router() *gin.Engine {
 	router := gin.New()
 	router.Use(Logging)
 	router.GET("/ws", chat.serveWs)
+	router.POST("/", chat.createRoom)
 	router.GET("/", chat.getRooms)
 	return router
 }

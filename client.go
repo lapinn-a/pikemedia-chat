@@ -64,8 +64,6 @@ func (chat *Chat) serveWs(c *gin.Context) {
 
 	hub, ok := chat.rooms[string(p)]
 
-	log.Println(string(p))
-
 	if !ok {
 		err = conn.Close()
 		if err != nil {
