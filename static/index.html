@@ -2,45 +2,101 @@
 <html>
     <head>
         <script>
-            var socket = new WebSocket("ws://" + location.host + "/ws");
-            socket.onopen = function() {
-                socket.send("username");
-            };
+            var socket;
+            function write(message){
+                var tag = document.createElement("div");
+                tag.textContent = message;
+                var messages = document.getElementById("messages");
+                messages.appendChild(tag);
+                messages.scrollTop = messages.scrollHeight;
+            }
 
-            socket.onclose = function(event) {
-                if (event.wasClean) {
-                    console.log('Соединение закрыто чисто');
-                } else {
-                    console.log('Обрыв соединения'); // например, "убит" процесс сервера
+            function register(){
+                document.getElementById("join").style.display = 'none';
+                socket = new WebSocket("ws://" + location.host + "/ws");
+
+                socket.onopen = function() {
+                    socket.send(document.getElementById("room").value);
+                    socket.send(document.getElementById("name").value);
+                };
+
+                socket.onclose = function(event) {
+                    if (event.wasClean) {
+                        console.log('Соединение закрыто чисто');
+                        write('[Соединение закрыто чисто]');
+                    } else {
+                        console.log('Обрыв соединения'); // например, "убит" процесс сервера
+                        write('[Обрыв соединения]');
+                    }
+                    console.log('Код: ' + event.code + ' причина: ' + event.reason);
+                };
+
+                socket.onmessage = function(event) {
+                    console.log("Получены данные " + event.data);
+                    write(event.data);
+                };
+
+                socket.onerror = function(error) {
+                    console.log("Ошибка " + error.message);
+                    write("[ОШИБКА: " + error.message + "]");
+                };
+
+                document.getElementById("chat").style.display = 'block';
+                return false;
+            }
+
+            function send() {
+                try {
+                    socket.send(document.getElementById("message").value);
+                } catch (error) {
+                    console.log("Ошибка " + error.message);
+                    write("[ОШИБКА: " + error.message + "]");
                 }
-                console.log('Код: ' + event.code + ' причина: ' + event.reason);
-            };
 
-            socket.onmessage = function(event) {
-                console.log("Получены данные " + event.data);
-            };
-
-            socket.onerror = function(error) {
-                console.log("Ошибка " + error.message);
-            };
+                return false;
+            }
         </script>
     </head>
     <body>
-        <form method="post" action="chat">
-            <div style="width:350px">
-            <b>Выберите комнату:</b>
-            <br>
-            <select name="user" id="userID" size="10" style="width:250px">
-                <option>John</option>
-                <option>Paul</option>
-                <option>Ringo</option>
-                <option>George</option>
-            </select>
-            <br>
-            <div style="display: inline-block"><b>Ваше имя:</b></div>
-            <input type="text" style="display: inline-block">
-            <input type="submit" value="Войти" style="display: inline-block">
-            </div>
-        </form>
+        <div id="join">
+            <form onSubmit="return register();">
+                <div style="width:500px">
+                    <b>Выберите комнату:</b>
+                    <br>
+                    <select id="room" size="10" style="width:250px">
+                        {{ range $k, $v := . }}
+                        <option value="{{ $k }}">
+                            {{ $k }}
+                            {{ with $v }}
+                                [Online: {{ .CountOnline }}]
+                            {{ end }}
+                        </option>
+                        {{ end }}
+                    </select>
+                    <br>
+                    <div style="display: inline-block">
+                        <b>Ваше имя:</b>
+                    </div>
+                    <input id="name" type="text" style="display: inline-block">
+                    <input type="submit" value="Войти" style="display: inline-block">
+                </div>
+            </form>
+        </div>
+        <div id="chat" style="display:none">
+            <form onSubmit="return send();">
+                <div style="width:500px;">
+                    <b id="chatName"></b>
+                    <br>
+                    <div id="messages" style="width:350px; height:350px; overflow-y: scroll">
+                    </div>
+                    <br>
+                    <div style="display: inline-block">
+                        <b>Ваше сообщение:</b>
+                    </div>
+                    <input id="message" type="text" style="display: inline-block;">
+                    <input type="submit" value="Отправить" style="display: inline-block">
+                </div>
+            </form>
+        </div>
     </body>
 </html>

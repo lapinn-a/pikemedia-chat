@@ -10,10 +10,10 @@ func Logging(c *gin.Context) {
 	c.Next()
 }
 
-func (hub Hub) Router() *gin.Engine {
+func (chat *Chat) Router() *gin.Engine {
 	router := gin.New()
 	router.Use(Logging)
-	router.GET("/ws", hub.serveWs)
-	router.StaticFile("/", "./static/index.html")
+	router.GET("/ws", chat.serveWs)
+	router.GET("/", chat.getRooms)
 	return router
 }
