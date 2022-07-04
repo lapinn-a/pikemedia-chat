@@ -38,3 +38,17 @@ func (chat *Chat) getRooms(c *gin.Context) {
 		return
 	}
 }
+
+func (chat *Chat) getOnline(c *gin.Context) {
+	if c.Query("room") != "" {
+		online := chat.rooms[c.Query("room")].CountOnline()
+		c.JSON(http.StatusOK, gin.H{"online": online})
+	} else {
+		online := make(map[string]int)
+		acc := 0
+		for key, value := range chat.rooms {
+			online[key] = value.CountOnline()
+		}
+		c.JSON(http.StatusOK, gin.H{"rooms": online, "overall": acc})
+	}
+}

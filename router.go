@@ -16,5 +16,6 @@ func (chat *Chat) Router() *gin.Engine {
 	router.GET("/ws", chat.serveWs)
 	router.POST("/", chat.createRoom)
 	router.GET("/", chat.getRooms)
+	router.GET("/online", chat.getOnline)
 	return router
 }
