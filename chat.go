@@ -41,7 +41,13 @@ func (chat *Chat) getRooms(c *gin.Context) {
 
 func (chat *Chat) getOnline(c *gin.Context) {
 	if c.Query("room") != "" {
-		online := chat.rooms[c.Query("room")].CountOnline()
+		room, ok := chat.rooms[c.Query("room")]
+
+		if !ok {
+			c.String(http.StatusNotFound, "Room not found")
+			return
+		}
+		online := room.CountOnline()
 		c.JSON(http.StatusOK, gin.H{"online": online})
 	} else {
 		online := make(map[string]int)

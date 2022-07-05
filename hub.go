@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 )
 
 type Hub struct {
@@ -25,20 +26,29 @@ func (hub *Hub) CountOnline() int {
 }
 
 func (hub *Hub) run() {
+	i := 0
 	for {
+		i++
 		select {
 		case res := <-hub.register:
-			fmt.Println("Response register ", res)
+			log.Printf("i:%d act:register %v", i, res)
+			//fmt.Println("Response register ", res)
 			hub.clients[res] = true
-			hub.broadcast <- Message{res, "заходит в чат", true}
+			//select {
+			//case hub.broadcast <- Message{res, "заходит в чат", true}:
+			//default:
+			//}
 		case res := <-hub.unregister:
-			fmt.Println("Response unregister ", res)
-			close(res.toSocket)
-			delete(hub.clients, res)
-			hub.broadcast <- Message{res, "выходит из чата", true}
+			log.Printf("i:%d act:unregister %v", i, res)
+			//fmt.Println("Response unregister ", res)
+			//close(res.toSocket)
+			//delete(hub.clients, res)
+			//hub.broadcast <- Message{res, "выходит из чата", true}
 		case res := <-hub.broadcast:
-			fmt.Println("Response broadcast ", res)
+			log.Printf("i:%d act:broadcast %v", i, res)
+			//fmt.Println("Response broadcast ", res)
 			for client := range hub.clients {
+				log.Printf("    %v", client)
 				select {
 				case client.toSocket <- func() string {
 					if res.action == true {
@@ -50,6 +60,12 @@ func (hub *Hub) run() {
 				default:
 					//fmt.Println("Channel full. Disconnecting")
 					//hub.unregister <- client
+					close(client.toSocket)
+					delete(hub.clients, client)
+					select {
+					case hub.broadcast <- Message{client, "выходит из чата", true}:
+					default:
+					}
 				}
 			}
 		}

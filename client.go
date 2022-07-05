@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log"
+	"math/rand"
 	"net/http"
 )
 
@@ -50,6 +52,7 @@ func (client *Client) readPump() {
 }
 
 func (chat *Chat) serveWs(c *gin.Context) {
+	log.Printf("serveWS start")
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -65,6 +68,7 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	hub, ok := chat.rooms[string(p)]
 
 	if !ok {
+		log.Printf("not ok")
 		err = conn.Close()
 		if err != nil {
 			log.Println(err)
@@ -76,6 +80,7 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	var client Client
 	conn.SetCloseHandler(func(code int, text string) error {
 		hub.unregister <- &client
+		hub.broadcast <- Message{&client, "выходит из чата", true}
 		return nil
 	})
 
@@ -86,11 +91,13 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	}
 
 	client.conn = conn
-	client.name = string(p)
+	client.name = fmt.Sprintf("%s %d", string(p), rand.Int())
 	client.toSocket = make(chan string, 64)
 	client.toHub = hub.broadcast
 	hub.register <- &client
+	hub.broadcast <- Message{&client, "заходит в чат", true}
 
 	go client.writePump()
 	go client.readPump()
+	log.Printf("serveWS end")
 }
