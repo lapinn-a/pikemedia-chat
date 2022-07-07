@@ -3,9 +3,11 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"runtime"
 )
 
 func Logging(c *gin.Context) {
+	log.Printf("#%v", runtime.NumGoroutine())
 	log.Printf("%v %v", c.Request.Method, c.Request.RequestURI)
 	c.Next()
 }

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log"
-	"math/rand"
 	"net/http"
+	"runtime/pprof"
 )
 
 type Client struct {
@@ -31,11 +31,18 @@ var upgrader = websocket.Upgrader{
 }
 
 func (client *Client) writePump() {
-	for message := range client.toSocket {
-		err := client.conn.WriteMessage(websocket.TextMessage, []byte(message))
-		if err != nil {
-			log.Println(err)
-			return
+	for {
+		select {
+		case message := <-client.toSocket:
+			err := client.conn.WriteMessage(websocket.TextMessage, []byte(message))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		default:
+			if client.toSocket == nil {
+				return
+			}
 		}
 	}
 }
@@ -52,7 +59,6 @@ func (client *Client) readPump() {
 }
 
 func (chat *Chat) serveWs(c *gin.Context) {
-	log.Printf("serveWS start")
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -68,7 +74,6 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	hub, ok := chat.rooms[string(p)]
 
 	if !ok {
-		log.Printf("not ok")
 		err = conn.Close()
 		if err != nil {
 			log.Println(err)
@@ -78,6 +83,7 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	}
 
 	var client Client
+
 	conn.SetCloseHandler(func(code int, text string) error {
 		hub.unregister <- &client
 		hub.broadcast <- Message{&client, "выходит из чата", true}
@@ -91,13 +97,25 @@ func (chat *Chat) serveWs(c *gin.Context) {
 	}
 
 	client.conn = conn
-	client.name = fmt.Sprintf("%s %d", string(p), rand.Int())
-	client.toSocket = make(chan string, 64)
+	//client.name = fmt.Sprintf("%s %d", string(p), rand.Int())
+	client.name = string(p)
+	client.toSocket = make(chan string, 128)
 	client.toHub = hub.broadcast
 	hub.register <- &client
 	hub.broadcast <- Message{&client, "заходит в чат", true}
 
-	go client.writePump()
-	go client.readPump()
-	log.Printf("serveWS end")
+	//go client.writePump()
+	go func() {
+		labels := pprof.Labels("func", "writePump")
+		pprof.Do(context.Background(), labels, func(_ context.Context) {
+			client.writePump()
+		})
+	}()
+	//go client.readPump()
+	go func() {
+		labels := pprof.Labels("func", "readPump")
+		pprof.Do(context.Background(), labels, func(_ context.Context) {
+			client.readPump()
+		})
+	}()
 }

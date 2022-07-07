@@ -15,14 +15,22 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:    make(map[*Client]bool),
-		register:   make(chan *Client, 64),
-		unregister: make(chan *Client, 64),
-		broadcast:  make(chan Message, 64),
+		register:   make(chan *Client, 128),
+		unregister: make(chan *Client, 128),
+		broadcast:  make(chan Message, 128),
 	}
 }
 
 func (hub *Hub) CountOnline() int {
 	return len(hub.clients)
+}
+
+func (hub *Hub) disconnect(client *Client) {
+	if client.toSocket != nil {
+		close(client.toSocket)
+		client.toSocket = nil
+	}
+	delete(hub.clients, client)
 }
 
 func (hub *Hub) run() {
@@ -32,23 +40,15 @@ func (hub *Hub) run() {
 		select {
 		case res := <-hub.register:
 			log.Printf("i:%d act:register %v", i, res)
-			//fmt.Println("Response register ", res)
-			hub.clients[res] = true
-			//select {
-			//case hub.broadcast <- Message{res, "заходит в чат", true}:
-			//default:
-			//}
+			if res.toSocket != nil {
+				hub.clients[res] = true
+			}
 		case res := <-hub.unregister:
 			log.Printf("i:%d act:unregister %v", i, res)
-			//fmt.Println("Response unregister ", res)
-			//close(res.toSocket)
-			//delete(hub.clients, res)
-			//hub.broadcast <- Message{res, "выходит из чата", true}
+			hub.disconnect(res)
 		case res := <-hub.broadcast:
 			log.Printf("i:%d act:broadcast %v", i, res)
-			//fmt.Println("Response broadcast ", res)
 			for client := range hub.clients {
-				log.Printf("    %v", client)
 				select {
 				case client.toSocket <- func() string {
 					if res.action == true {
@@ -58,14 +58,8 @@ func (hub *Hub) run() {
 					}
 				}():
 				default:
-					//fmt.Println("Channel full. Disconnecting")
-					//hub.unregister <- client
-					close(client.toSocket)
-					delete(hub.clients, client)
-					select {
-					case hub.broadcast <- Message{client, "выходит из чата", true}:
-					default:
-					}
+					log.Printf("Channel full. Disconnect")
+					hub.disconnect(client)
 				}
 			}
 		}
