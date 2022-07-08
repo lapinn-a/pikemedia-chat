@@ -31,18 +31,11 @@ var upgrader = websocket.Upgrader{
 }
 
 func (client *Client) writePump() {
-	for {
-		select {
-		case message := <-client.toSocket:
-			err := client.conn.WriteMessage(websocket.TextMessage, []byte(message))
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		default:
-			if client.toSocket == nil {
-				return
-			}
+	for message := range client.toSocket {
+		err := client.conn.WriteMessage(websocket.TextMessage, []byte(message))
+		if err != nil {
+			log.Println(err)
+			return
 		}
 	}
 }

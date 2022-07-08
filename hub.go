@@ -26,11 +26,11 @@ func (hub *Hub) CountOnline() int {
 }
 
 func (hub *Hub) disconnect(client *Client) {
-	if client.toSocket != nil {
+	_, ok := hub.clients[client]
+	if ok {
+		delete(hub.clients, client)
 		close(client.toSocket)
-		client.toSocket = nil
 	}
-	delete(hub.clients, client)
 }
 
 func (hub *Hub) run() {
@@ -40,9 +40,7 @@ func (hub *Hub) run() {
 		select {
 		case res := <-hub.register:
 			log.Printf("i:%d act:register %v", i, res)
-			if res.toSocket != nil {
-				hub.clients[res] = true
-			}
+			hub.clients[res] = true
 		case res := <-hub.unregister:
 			log.Printf("i:%d act:unregister %v", i, res)
 			hub.disconnect(res)

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"html/template"
 	"log"
 	"net/http"
+	"runtime/pprof"
 )
 
 type Chat struct {
@@ -25,7 +27,13 @@ func (chat *Chat) createRoom(c *gin.Context) {
 		return
 	}
 	hub := NewHub()
-	go hub.run()
+	//go hub.run()
+	go func() {
+		labels := pprof.Labels("func", "run")
+		pprof.Do(context.Background(), labels, func(_ context.Context) {
+			hub.run()
+		})
+	}()
 	chat.rooms[c.PostForm("room")] = hub
 	c.Redirect(http.StatusSeeOther, "/")
 }
