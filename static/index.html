@@ -18,6 +18,7 @@
                 socket.onopen = function() {
                     socket.send(document.getElementById("room").value);
                     socket.send(document.getElementById("name").value);
+                    document.getElementById("chatName").textContent = document.getElementById("room").value;
                 };
 
                 socket.onclose = function(event) {
@@ -91,10 +92,15 @@
             </form>
         </div>
         <div id="chat" style="display:none">
+            <form method="get" action="/">
+                <span>
+                    Комната:
+                    <b id="chatName"></b>
+                </span>
+                <input type="submit" value="Выйти" style="display: inline-block">
+            </form>
             <form onSubmit="return send();">
                 <div style="width:500px;">
-                    <b id="chatName"></b>
-                    <br>
                     <div id="messages" style="width:350px; height:350px; overflow-y: scroll">
                     </div>
                     <br>
